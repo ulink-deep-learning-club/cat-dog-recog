@@ -22,3 +22,9 @@ dependencies = [
 dev = [
     "ruff>=0.14.10",
 ]
+
+
+[[tool.uv.index]]
+name = "pytorch-cu122"
+url = "https://download.pytorch.org/whl/cu122"
+explicit = true
