@@ -13,3 +13,6 @@ data/
 .DS_Store
 .ruff_cache
 checkpoints
+runs/
+*.zip
+evaluation_results/

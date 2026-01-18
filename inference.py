@@ -13,16 +13,19 @@ import json
 import matplotlib.pyplot as plt
 from utils import auto_select_device
 import warnings
-warnings.filterwarnings('ignore')
+
+warnings.filterwarnings("ignore")
 
 
 class InferenceEngine:
     """Engine for performing inference with trained models."""
 
-    def __init__(self,
-                 model: nn.Module,
-                 device: Optional[torch.device] = None,
-                 class_names: Optional[List[str]] = None):
+    def __init__(
+        self,
+        model: nn.Module,
+        device: Optional[torch.device] = None,
+        class_names: Optional[List[str]] = None,
+    ):
         """
         Args:
             model: Trained PyTorch model
@@ -34,14 +37,18 @@ class InferenceEngine:
         self.model.to(self.device)
         self.model.eval()
 
-        self.class_names = class_names or ['cat', 'dog']
+        self.class_names = class_names or ["cat", "dog"]
 
         # Default transforms (should match training)
-        self.transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
+        self.transform = transforms.Compose(
+            [
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
 
         print(f"Inference engine initialized on {self.device}")
 
@@ -57,7 +64,7 @@ class InferenceEngine:
         """
         # Load image if path is provided
         if isinstance(image, (str, Path)):
-            image = Image.open(image).convert('RGB')
+            image = Image.open(image).convert("RGB")
 
         # Apply transforms
         image_tensor = self.transform(image)
@@ -67,9 +74,11 @@ class InferenceEngine:
 
         return image_tensor
 
-    def predict(self,
-                image: Union[str, Path, Image.Image, torch.Tensor],
-                return_probabilities: bool = False) -> Union[str, Tuple[str, float]]:
+    def predict(
+        self,
+        image: Union[str, Path, Image.Image, torch.Tensor],
+        return_probabilities: bool = False,
+    ) -> Union[str, Tuple[str, float]]:
         """
         Predict class for a single image.
 
@@ -112,9 +121,11 @@ class InferenceEngine:
         else:
             return class_name
 
-    def predict_batch(self,
-                     images: List[Union[str, Path, Image.Image]],
-                     return_probabilities: bool = False) -> Union[List[str], Tuple[List[str], List[float]]]:
+    def predict_batch(
+        self,
+        images: List[Union[str, Path, Image.Image]],
+        return_probabilities: bool = False,
+    ) -> Union[List[str], Tuple[List[str], List[float]]]:
         """
         Predict classes for a batch of images.
 
@@ -150,7 +161,9 @@ class InferenceEngine:
 
             # Get predicted classes
             _, predicted = torch.max(probabilities, 1)
-            confidences = probabilities[torch.arange(len(predicted)), predicted].cpu().numpy()
+            confidences = (
+                probabilities[torch.arange(len(predicted)), predicted].cpu().numpy()
+            )
 
             # Get class names
             class_names = [self.class_names[p.item()] for p in predicted]
@@ -160,8 +173,9 @@ class InferenceEngine:
         else:
             return class_names
 
-    def predict_with_confidence(self,
-                               image: Union[str, Path, Image.Image]) -> Dict[str, Union[str, float]]:
+    def predict_with_confidence(
+        self, image: Union[str, Path, Image.Image]
+    ) -> Dict[str, Union[str, float]]:
         """
         Predict with detailed confidence information.
 
@@ -188,7 +202,9 @@ class InferenceEngine:
                 probabilities = torch.softmax(outputs, dim=1)[0]
             else:  # Binary classification
                 probabilities = torch.sigmoid(outputs)[0]
-                probabilities = torch.tensor([1 - probabilities.item(), probabilities.item()])
+                probabilities = torch.tensor(
+                    [1 - probabilities.item(), probabilities.item()]
+                )
 
             # Get all class probabilities
             class_probs = {}
@@ -201,16 +217,18 @@ class InferenceEngine:
             confidence = probabilities[predicted_idx].item()
 
         return {
-            'predicted_class': predicted_class,
-            'confidence': confidence,
-            'class_probabilities': class_probs,
-            'all_classes': self.class_names
+            "predicted_class": predicted_class,
+            "confidence": confidence,
+            "class_probabilities": class_probs,
+            "all_classes": self.class_names,
         }
 
-    def visualize_prediction(self,
-                            image_path: Union[str, Path],
-                            save_path: Optional[Union[str, Path]] = None,
-                            show: bool = True) -> Image.Image:
+    def visualize_prediction(
+        self,
+        image_path: Union[str, Path],
+        save_path: Optional[Union[str, Path]] = None,
+        show: bool = True,
+    ) -> Image.Image:
         """
         Visualize prediction on an image.
 
@@ -223,7 +241,7 @@ class InferenceEngine:
             Annotated PIL Image
         """
         # Load image
-        image = Image.open(image_path).convert('RGB')
+        image = Image.open(image_path).convert("RGB")
 
         # Get prediction
         prediction = self.predict_with_confidence(image_path)
@@ -249,12 +267,12 @@ class InferenceEngine:
         # Draw background rectangle
         padding = 5
         draw.rectangle(
-            [(10, 10), (10 + text_width + 2*padding, 10 + text_height + 2*padding)],
-            fill='black'
+            [(10, 10), (10 + text_width + 2 * padding, 10 + text_height + 2 * padding)],
+            fill="black",
         )
 
         # Draw text
-        draw.text((10 + padding, 10 + padding), text, fill='white', font=font)
+        draw.text((10 + padding, 10 + padding), text, fill="white", font=font)
 
         # Add probability bars
         bar_height = 20
@@ -262,25 +280,24 @@ class InferenceEngine:
         bar_spacing = 5
 
         for i, class_name in enumerate(self.class_names):
-            prob = prediction['class_probabilities'][class_name]
+            prob = prediction["class_probabilities"][class_name]
 
             # Draw bar background
             y = 50 + i * (bar_height + bar_spacing)
             draw.rectangle(
-                [(10, y), (10 + bar_width, y + bar_height)],
-                fill='lightgray'
+                [(10, y), (10 + bar_width, y + bar_height)], fill="lightgray"
             )
 
             # Draw probability bar
             fill_width = int(bar_width * prob)
             draw.rectangle(
                 [(10, y), (10 + fill_width, y + bar_height)],
-                fill='green' if class_name == prediction['predicted_class'] else 'blue'
+                fill="green" if class_name == prediction["predicted_class"] else "blue",
             )
 
             # Draw text
             text = f"{class_name}: {prob:.2%}"
-            draw.text((10 + bar_width + 10, y + 5), text, fill='black', font=font)
+            draw.text((10 + bar_width + 10, y + 5), text, fill="black", font=font)
 
         # Save if requested
         if save_path:
@@ -291,15 +308,17 @@ class InferenceEngine:
         if show:
             plt.figure(figsize=(10, 8))
             plt.imshow(annotated_image)
-            plt.axis('off')
-            plt.title(f"Prediction: {prediction['predicted_class']} ({prediction['confidence']:.2%})")
+            plt.axis("off")
+            plt.title(
+                f"Prediction: {prediction['predicted_class']} ({prediction['confidence']:.2%})"
+            )
             plt.show()
 
         return annotated_image
 
-    def test_on_directory(self,
-                         directory: Union[str, Path],
-                         class_subdirs: bool = True) -> Dict[str, float]:
+    def test_on_directory(
+        self, directory: Union[str, Path], class_subdirs: bool = True
+    ) -> Dict[str, float]:
         """
         Test model on all images in a directory.
 
@@ -314,8 +333,11 @@ class InferenceEngine:
 
         if not class_subdirs:
             # All images in one directory
-            image_paths = list(directory.glob("*.jpg")) + list(directory.glob("*.jpeg")) + \
-                         list(directory.glob("*.png"))
+            image_paths = (
+                list(directory.glob("*.jpg"))
+                + list(directory.glob("*.jpeg"))
+                + list(directory.glob("*.png"))
+            )
 
             # Without class labels, we can only get predictions
             predictions = []
@@ -323,7 +345,7 @@ class InferenceEngine:
                 pred = self.predict(img_path)
                 predictions.append((img_path.name, pred))
 
-            return {'total_images': len(image_paths), 'predictions': predictions}
+            return {"total_images": len(image_paths), "predictions": predictions}
 
         else:
             # Images organized by class
@@ -336,8 +358,11 @@ class InferenceEngine:
                 if not class_dir.exists():
                     continue
 
-                image_paths = list(class_dir.glob("*.jpg")) + list(class_dir.glob("*.jpeg")) + \
-                             list(class_dir.glob("*.png"))
+                image_paths = (
+                    list(class_dir.glob("*.jpg"))
+                    + list(class_dir.glob("*.jpeg"))
+                    + list(class_dir.glob("*.png"))
+                )
 
                 if not image_paths:
                     continue
@@ -350,19 +375,19 @@ class InferenceEngine:
 
                 accuracy = correct / len(image_paths) if image_paths else 0
                 results[class_name] = {
-                    'total': len(image_paths),
-                    'correct': correct,
-                    'accuracy': accuracy
+                    "total": len(image_paths),
+                    "correct": correct,
+                    "accuracy": accuracy,
                 }
 
                 total_correct += correct
                 total_images += len(image_paths)
 
             if total_images > 0:
-                results['overall'] = {
-                    'total': total_images,
-                    'correct': total_correct,
-                    'accuracy': total_correct / total_images
+                results["overall"] = {
+                    "total": total_images,
+                    "correct": total_correct,
+                    "accuracy": total_correct / total_images,
                 }
 
             return results
@@ -371,10 +396,14 @@ class InferenceEngine:
 class ModelLoader:
     """Utility class for loading trained models."""
 
+    RUNS_DIR = Path("runs")
+
     @staticmethod
-    def load_model(checkpoint_path: Union[str, Path],
-                   model_class: nn.Module,
-                   device: Optional[torch.device] = None) -> InferenceEngine:
+    def load_model(
+        checkpoint_path: Union[str, Path],
+        model_class: nn.Module,
+        device: Optional[torch.device] = None,
+    ) -> InferenceEngine:
         """
         Load a trained model from checkpoint.
 
@@ -393,14 +422,16 @@ class ModelLoader:
 
         # Create model
         model = model_class(num_classes=2)
-        model.load_state_dict(checkpoint['model_state_dict'])
+        model.load_state_dict(checkpoint["model_state_dict"])
 
         # Create inference engine
         engine = InferenceEngine(model, device)
 
         print(f"Loaded model from {checkpoint_path}")
-        print(f"Checkpoint info: Epoch {checkpoint.get('epoch', 'N/A')}, "
-              f"Val Acc: {checkpoint.get('val_acc', 'N/A'):.2f}%")
+        print(
+            f"Checkpoint info: Epoch {checkpoint.get('epoch', 'N/A')}, "
+            f"Val Acc: {checkpoint.get('val_acc', 'N/A'):.2f}%"
+        )
 
         return engine
 
@@ -417,20 +448,109 @@ class ModelLoader:
         """
         config_path = Path(config_path)
 
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             config = json.load(f)
 
         # Import model class
         import importlib
-        module = importlib.import_module(config['model_module'])
-        model_class = getattr(module, config['model_class'])
+
+        module = importlib.import_module(config["model_module"])
+        model_class = getattr(module, config["model_class"])
 
         # Load model
         return ModelLoader.load_model(
-            checkpoint_path=config['checkpoint_path'],
+            checkpoint_path=config["checkpoint_path"],
             model_class=model_class,
-            device=torch.device(config.get('device', 'cpu'))
+            device=torch.device(config.get("device", "cpu")),
         )
+
+    @staticmethod
+    def load_latest_model(
+        model_class: nn.Module, device: Optional[torch.device] = None
+    ) -> InferenceEngine:
+        """
+        Load the latest model from the most recent experiment.
+
+        Args:
+            model_class: Model class to instantiate
+            device: Device to load model on
+
+        Returns:
+            InferenceEngine with loaded model
+        """
+        if not ModelLoader.RUNS_DIR.exists():
+            raise FileNotFoundError(f"Runs directory not found: {ModelLoader.RUNS_DIR}")
+
+        experiments = [
+            d
+            for d in ModelLoader.RUNS_DIR.iterdir()
+            if d.is_dir() and d.name.startswith("exp")
+        ]
+
+        if not experiments:
+            raise FileNotFoundError(f"No experiments found in {ModelLoader.RUNS_DIR}")
+
+        latest_exp = max(experiments, key=lambda x: int(x.name.replace("exp", "")))
+        checkpoint_path = latest_exp / "checkpoints" / "final_model.pth"
+
+        if not checkpoint_path.exists():
+            # Try to find best model
+            checkpoints = list((latest_exp / "checkpoints").glob("best_model*.pth"))
+            if not checkpoints:
+                raise FileNotFoundError(
+                    f"No checkpoints found in {latest_exp / 'checkpoints'}"
+                )
+            checkpoint_path = max(
+                checkpoints,
+                key=lambda x: int(
+                    x.name.split("_acc")[0].replace("best_model_epoch", "")
+                ),
+            )
+
+        print(f"Loading latest model from experiment: {latest_exp.name}")
+        return ModelLoader.load_model(checkpoint_path, model_class, device)
+
+    @staticmethod
+    def load_from_experiment(
+        exp_name: str,
+        model_class: nn.Module,
+        use_final: bool = True,
+        device: Optional[torch.device] = None,
+    ) -> InferenceEngine:
+        """
+        Load model from a specific experiment.
+
+        Args:
+            exp_name: Experiment name (e.g., 'exp1', 'my_experiment')
+            model_class: Model class to instantiate
+            use_final: If True, load final_model.pth, else load best model
+            device: Device to load model on
+
+        Returns:
+            InferenceEngine with loaded model
+        """
+        exp_dir = ModelLoader.RUNS_DIR / exp_name
+
+        if not exp_dir.exists():
+            raise FileNotFoundError(f"Experiment not found: {exp_dir}")
+
+        checkpoint_dir = exp_dir / "checkpoints"
+
+        if use_final:
+            checkpoint_path = checkpoint_dir / "final_model.pth"
+        else:
+            checkpoints = list(checkpoint_dir.glob("best_model*.pth"))
+            if not checkpoints:
+                raise FileNotFoundError(
+                    f"No best model checkpoints found in {checkpoint_dir}"
+                )
+            checkpoint_path = max(
+                checkpoints,
+                key=lambda x: float(x.name.split("_acc")[1].replace(".pth", "")),
+            )
+
+        print(f"Loading model from experiment: {exp_name}")
+        return ModelLoader.load_model(checkpoint_path, model_class, device)
 
 
 def test_inference():
@@ -439,13 +559,14 @@ def test_inference():
 
     # Create a simple model
     from model import CustomCNN
+
     model = CustomCNN(num_classes=2)
 
     # Create inference engine
     engine = InferenceEngine(model)
 
     # Create a dummy image
-    dummy_image = Image.new('RGB', (224, 224), color='red')
+    dummy_image = Image.new("RGB", (224, 224), color="red")
 
     # Test single prediction
     print("\nTesting single image prediction:")
@@ -454,7 +575,9 @@ def test_inference():
 
     # Test batch prediction
     print("\nTesting batch prediction:")
-    batch_predictions = engine.predict_batch([dummy_image, dummy_image], return_probabilities=True)
+    batch_predictions = engine.predict_batch(
+        [dummy_image, dummy_image], return_probabilities=True
+    )
     print(f"Batch predictions: {batch_predictions}")
 
     # Test detailed prediction
